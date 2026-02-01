@@ -1,7 +1,13 @@
 document.addEventListener("DOMContentLoaded", function () {
 
   function showMore() {
-    document.getElementById("hidden").style.display = "block";
+    const hiddenElement = document.getElementById("hidden");
+    hiddenElement.classList.add("show");
+    // Hide button after revealing message
+    const button = document.querySelector(".reveal-btn");
+    if (button) {
+      button.style.display = "none";
+    }
   }
   window.showMore = showMore; // keep button working
 
