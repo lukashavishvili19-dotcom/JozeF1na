@@ -1,15 +1,73 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-  function showMore() {
-    const hiddenElement = document.getElementById("hidden");
-    hiddenElement.classList.add("show");
-    // Hide button after revealing message
-    const button = document.querySelector(".reveal-btn");
-    if (button) {
-      button.style.display = "none";
+  const correctPassword = "jozefina";
+
+  function showPasswordPrompt() {
+    const prompt = document.getElementById("passwordPrompt");
+    const input = document.getElementById("passwordInput");
+    const error = document.getElementById("passwordError");
+    
+    prompt.classList.add("show");
+    input.value = "";
+    error.textContent = "";
+    input.focus();
+  }
+
+  function closePasswordPrompt() {
+    const prompt = document.getElementById("passwordPrompt");
+    const input = document.getElementById("passwordInput");
+    const error = document.getElementById("passwordError");
+    
+    prompt.classList.remove("show");
+    input.value = "";
+    error.textContent = "";
+  }
+
+  function checkPassword() {
+    const input = document.getElementById("passwordInput");
+    const error = document.getElementById("passwordError");
+    const enteredPassword = input.value.trim().toLowerCase();
+    
+    if (enteredPassword === correctPassword.toLowerCase()) {
+      // Correct password - show message
+      closePasswordPrompt();
+      const hiddenElement = document.getElementById("hidden");
+      hiddenElement.classList.add("show");
+      
+      // Hide button after revealing message
+      const button = document.querySelector(".reveal-btn");
+      if (button) {
+        button.style.display = "none";
+      }
+    } else {
+      // Wrong password - show error
+      error.textContent = "Incorrect password. Please try again.";
+      input.value = "";
+      input.focus();
+      
+      // Shake animation
+      const promptBox = document.querySelector(".password-box");
+      promptBox.classList.add("shake");
+      setTimeout(() => {
+        promptBox.classList.remove("shake");
+      }, 500);
     }
   }
-  window.showMore = showMore; // keep button working
+
+  // Make functions globally accessible
+  window.showPasswordPrompt = showPasswordPrompt;
+  window.closePasswordPrompt = closePasswordPrompt;
+  window.checkPassword = checkPassword;
+
+  // Allow Enter key to submit password
+  const passwordInput = document.getElementById("passwordInput");
+  if (passwordInput) {
+    passwordInput.addEventListener("keypress", function(e) {
+      if (e.key === "Enter") {
+        checkPassword();
+      }
+    });
+  }
 
   // Target: April 9, 2026 (month 3 = April, since months are 0-indexed)
   const targetDate = new Date(2026, 3, 9, 0, 0, 0);
