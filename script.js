@@ -1,64 +1,75 @@
-document.addEventListener("DOMContentLoaded", function () {
+// Password functions - available globally
+const correctPassword = "jozefina";
 
-  const correctPassword = "jozefina";
+function showPasswordPrompt() {
+  const prompt = document.getElementById("passwordPrompt");
+  const input = document.getElementById("passwordInput");
+  const error = document.getElementById("passwordError");
+  
+  if (!prompt || !input || !error) return;
+  
+  prompt.classList.add("show");
+  input.value = "";
+  error.textContent = "";
+  setTimeout(() => input.focus(), 100);
+}
 
-  function showPasswordPrompt() {
-    const prompt = document.getElementById("passwordPrompt");
-    const input = document.getElementById("passwordInput");
-    const error = document.getElementById("passwordError");
-    
-    prompt.classList.add("show");
-    input.value = "";
-    error.textContent = "";
-    input.focus();
-  }
+function closePasswordPrompt() {
+  const prompt = document.getElementById("passwordPrompt");
+  const input = document.getElementById("passwordInput");
+  const error = document.getElementById("passwordError");
+  
+  if (!prompt || !input || !error) return;
+  
+  prompt.classList.remove("show");
+  input.value = "";
+  error.textContent = "";
+}
 
-  function closePasswordPrompt() {
-    const prompt = document.getElementById("passwordPrompt");
-    const input = document.getElementById("passwordInput");
-    const error = document.getElementById("passwordError");
-    
-    prompt.classList.remove("show");
-    input.value = "";
-    error.textContent = "";
-  }
-
-  function checkPassword() {
-    const input = document.getElementById("passwordInput");
-    const error = document.getElementById("passwordError");
-    const enteredPassword = input.value.trim().toLowerCase();
-    
-    if (enteredPassword === correctPassword.toLowerCase()) {
-      // Correct password - show message
-      closePasswordPrompt();
-      const hiddenElement = document.getElementById("hidden");
+function checkPassword() {
+  const input = document.getElementById("passwordInput");
+  const error = document.getElementById("passwordError");
+  
+  if (!input || !error) return;
+  
+  const enteredPassword = input.value.trim().toLowerCase();
+  
+  if (enteredPassword === correctPassword.toLowerCase()) {
+    // Correct password - show message
+    closePasswordPrompt();
+    const hiddenElement = document.getElementById("hidden");
+    if (hiddenElement) {
       hiddenElement.classList.add("show");
-      
-      // Hide button after revealing message
-      const button = document.querySelector(".reveal-btn");
-      if (button) {
-        button.style.display = "none";
-      }
-    } else {
-      // Wrong password - show error
-      error.textContent = "Incorrect password. Please try again.";
-      input.value = "";
-      input.focus();
-      
-      // Shake animation
-      const promptBox = document.querySelector(".password-box");
+    }
+    
+    // Hide button after revealing message
+    const button = document.querySelector(".reveal-btn");
+    if (button) {
+      button.style.display = "none";
+    }
+  } else {
+    // Wrong password - show error
+    error.textContent = "Incorrect password. Please try again.";
+    input.value = "";
+    input.focus();
+    
+    // Shake animation
+    const promptBox = document.querySelector(".password-box");
+    if (promptBox) {
       promptBox.classList.add("shake");
       setTimeout(() => {
         promptBox.classList.remove("shake");
       }, 500);
     }
   }
+}
 
-  // Make functions globally accessible
-  window.showPasswordPrompt = showPasswordPrompt;
-  window.closePasswordPrompt = closePasswordPrompt;
-  window.checkPassword = checkPassword;
+// Make functions globally accessible
+window.showPasswordPrompt = showPasswordPrompt;
+window.closePasswordPrompt = closePasswordPrompt;
+window.checkPassword = checkPassword;
 
+document.addEventListener("DOMContentLoaded", function () {
   // Allow Enter key to submit password
   const passwordInput = document.getElementById("passwordInput");
   if (passwordInput) {
@@ -67,6 +78,21 @@ document.addEventListener("DOMContentLoaded", function () {
         checkPassword();
       }
     });
+  }
+  
+  // Close password prompt when clicking outside
+  const passwordPrompt = document.getElementById("passwordPrompt");
+  if (passwordPrompt) {
+    passwordPrompt.addEventListener("click", function(e) {
+      if (e.target === passwordPrompt) {
+        closePasswordPrompt();
+      }
+    });
+  }
+  
+  // Ensure password prompt is hidden on load
+  if (passwordPrompt) {
+    passwordPrompt.classList.remove("show");
   }
 
   // Target: April 9, 2026 (month 3 = April, since months are 0-indexed)
