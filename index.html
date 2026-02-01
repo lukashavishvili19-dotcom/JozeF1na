@@ -42,9 +42,22 @@
 
       <div class="divider"></div>
 
-      <button onclick="showMore()" class="reveal-btn">
+      <button onclick="showPasswordPrompt()" class="reveal-btn">
         <span>View Message</span>
       </button>
+
+      <!-- Password Prompt -->
+      <div id="passwordPrompt" class="password-prompt">
+        <div class="password-box">
+          <h3>Enter Password</h3>
+          <input type="password" id="passwordInput" placeholder="Password" autocomplete="off">
+          <p id="passwordError" class="error-message"></p>
+          <div class="password-buttons">
+            <button onclick="checkPassword()" class="submit-btn">Submit</button>
+            <button onclick="closePasswordPrompt()" class="cancel-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
 
       <p id="hidden" class="hidden-message">
         Every moment brings us closer. Looking forward to what's ahead.
