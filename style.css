@@ -97,7 +97,7 @@ h1 {
 }
 
 .countdown-item {
-  background: linear-gradient(135deg, #fff5f0 0%, #ffe8e0 100%);
+  background: linear-gradient(135deg, #fff4e6 0%, #ffe0cc 100%);
   border-radius: 16px;
   padding: 24px 12px;
   border: 1px solid rgba(255, 107, 53, 0.1);
@@ -188,7 +188,7 @@ h1 {
   display: none;
   margin-top: 30px;
   padding: 24px;
-  background: linear-gradient(135deg, #fff5f0 0%, #ffe8e0 100%);
+  background: linear-gradient(135deg, #fff4e6 0%, #ffe0cc 100%);
   border-radius: 12px;
   color: #666;
   font-size: 16px;
