@@ -1,48 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400&display=swap');
+
 body {
   margin: 0;
   height: 100vh;
-  background: linear-gradient(135deg, #ffd6e8, #fff1f8);
+  background: linear-gradient(135deg, #ffdde1, #ee9ca7);
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Poppins', sans-serif;
 }
 
 .card {
-  background: white;
-  padding: 40px;
-  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 50px 40px;
+  border-radius: 25px;
   text-align: center;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-  max-width: 400px;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.25);
+  max-width: 420px;
+  animation: fadeIn 1.2s ease;
 }
 
 h1 {
-  color: #ff4d88;
+  font-family: 'Playfair Display', serif;
+  font-size: 36px;
+  color: #ff2f6d;
+  margin-bottom: 20px;
 }
 
 p {
   font-size: 18px;
   color: #444;
+  line-height: 1.6;
 }
 
 button {
-  margin-top: 20px;
-  padding: 10px 25px;
+  margin-top: 25px;
+  padding: 12px 30px;
   border: none;
-  border-radius: 25px;
-  background: #ff4d88;
+  border-radius: 30px;
+  background: linear-gradient(135deg, #ff4d88, #ff1f6d);
   color: white;
   font-size: 16px;
   cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 button:hover {
-  background: #ff1f6d;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(255, 77, 136, 0.4);
 }
 
 .hidden {
   display: none;
-  margin-top: 20px;
-  color: #ff4d88;
+  margin-top: 25px;
+  color: #ff2f6d;
+  font-weight: 500;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
