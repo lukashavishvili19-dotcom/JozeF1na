@@ -2,35 +2,54 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>For You ❤️</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Countdown</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="card">
-    <h1>Hey My Love 💖</h1>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <h1>April 9, 2026</h1>
+        <p class="subtitle">Time Remaining</p>
+      </div>
 
-    <p id="message">
-      Every day with you is my favorite day.<br>
-      So today, I made this… just for you.
-    </p>
+      <!-- COUNTDOWN START -->
+      <div class="countdown">
+        <div class="countdown-item">
+          <span id="months" class="number">0</span>
+          <small class="label">Months</small>
+        </div>
+        <div class="countdown-item">
+          <span id="days" class="number">0</span>
+          <small class="label">Days</small>
+        </div>
+        <div class="countdown-item">
+          <span id="hours" class="number">0</span>
+          <small class="label">Hours</small>
+        </div>
+        <div class="countdown-item">
+          <span id="minutes" class="number">0</span>
+          <small class="label">Minutes</small>
+        </div>
+        <div class="countdown-item">
+          <span id="seconds" class="number">0</span>
+          <small class="label">Seconds</small>
+        </div>
+      </div>
+      <!-- COUNTDOWN END -->
 
-    <!-- COUNTDOWN START -->
-    <div class="countdown">
-      <div><span id="months">0</span><small>Months</small></div>
-      <div><span id="days">0</span><small>Days</small></div>
-      <div><span id="hours">0</span><small>Hours</small></div>
-      <div><span id="minutes">0</span><small>Minutes</small></div>
-      <div><span id="seconds">0</span><small>Seconds</small></div>
+      <div class="divider"></div>
+
+      <button onclick="showMore()" class="reveal-btn">
+        <span>View Message</span>
+      </button>
+
+      <p id="hidden" class="hidden-message">
+        Every moment brings us closer. Looking forward to what's ahead.
+      </p>
     </div>
-    <!-- COUNTDOWN END -->
-
-    <button onclick="showMore()">Click me 💌</button>
-
-    <p id="hidden" class="hidden">
-      You are my smile, my calm, my happiness.<br>
-      I love you more than words can say ❤️
-    </p>
   </div>
 
   <script src="script.js"></script>
