@@ -39,6 +39,10 @@ function checkPassword() {
     closePasswordPrompt();
     const hiddenElement = document.getElementById("hidden");
     if (hiddenElement) {
+      // Update message before showing (in case it changed)
+      if (typeof window.updateHiddenMessage === 'function') {
+        window.updateHiddenMessage();
+      }
       hiddenElement.classList.add("show");
     }
     
@@ -151,14 +155,15 @@ document.addEventListener("DOMContentLoaded", function () {
   updateCountdown();
   setInterval(updateCountdown, 1000);
 
-  // ===== NOTE EDITOR WITH 24-HOUR AUTO-DELETE =====
+  // ===== MESSAGE EDITOR - UPDATES "VIEW MESSAGE" WITH 24-HOUR AUTO-DELETE =====
 
-  const NOTES_STORAGE_KEY = "jzf_temp_notes_v1";
-  const NOTE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+  const MESSAGE_STORAGE_KEY = "jzf_message_v1";
+  const MESSAGE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+  const DEFAULT_MESSAGE = "nothing to say";
 
   const noteInput = document.getElementById("noteInput");
   const submitNoteBtn = document.getElementById("submitNote");
-  const notesList = document.getElementById("notesList");
+  const hiddenMessageElement = document.getElementById("hidden");
 
   // Check if localStorage is available
   function isLocalStorageAvailable() {
@@ -172,136 +177,69 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  function loadNotes() {
+  function loadMessage() {
     if (!isLocalStorageAvailable()) {
-      console.warn('localStorage is not available');
-      return [];
+      return null;
     }
     try {
-      const raw = localStorage.getItem(NOTES_STORAGE_KEY);
-      if (!raw || raw === 'null' || raw === 'undefined') return [];
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return [];
-      // Ensure all notes have required fields
-      return parsed.filter(n => n && n.id && n.text && n.createdAt);
+      const raw = localStorage.getItem(MESSAGE_STORAGE_KEY);
+      if (!raw || raw === 'null' || raw === 'undefined') return null;
+      const message = JSON.parse(raw);
+      if (!message || !message.text || !message.createdAt) return null;
+      return message;
     } catch (e) {
-      console.error('Error loading notes:', e);
-      return [];
+      console.error('Error loading message:', e);
+      return null;
     }
   }
 
-  function saveNotes(notes) {
+  function saveMessage(text) {
     if (!isLocalStorageAvailable()) {
-      console.warn('localStorage is not available');
       return false;
     }
     try {
-      // Ensure we're saving a valid array
-      const validNotes = Array.isArray(notes) ? notes : [];
-      localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(validNotes));
+      const message = {
+        text: text,
+        createdAt: Date.now()
+      };
+      localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(message));
       return true;
     } catch (e) {
-      console.error('Error saving notes:', e);
-      // Handle quota exceeded error
+      console.error('Error saving message:', e);
       if (e.name === 'QuotaExceededError') {
-        alert('Storage limit reached. Please delete some old messages.');
+        alert('Storage limit reached.');
       }
       return false;
     }
   }
 
-  function isExpired(note) {
-    if (!note || !note.createdAt) return true;
-    return Date.now() - note.createdAt >= NOTE_TTL_MS;
+  function isMessageExpired(message) {
+    if (!message || !message.createdAt) return true;
+    return Date.now() - message.createdAt >= MESSAGE_TTL_MS;
   }
 
-  function cleanupExpired(notes) {
-    const fresh = notes.filter(n => !isExpired(n));
-    if (fresh.length !== notes.length) {
-      saveNotes(fresh);
-    }
-    return fresh;
-  }
-
-  function formatTime(ts) {
-    const d = new Date(ts);
-    return d.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit'
-    });
-  }
-
-  function formatTimeRemaining(remainingMs) {
-    if (remainingMs <= 0) return "Expired";
-    const hours = Math.floor(remainingMs / (60 * 60 * 1000));
-    const minutes = Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000));
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
-  }
-
-  function renderNotes() {
-    if (!notesList) return;
-    let notes = loadNotes();
-    notes = cleanupExpired(notes);
-
-    notesList.innerHTML = "";
+  function updateHiddenMessage() {
+    if (!hiddenMessageElement) return;
     
-    if (notes.length === 0) {
-      const emptyMsg = document.createElement("div");
-      emptyMsg.className = "note-empty";
-      emptyMsg.textContent = "No messages yet. Be the first to leave one!";
-      notesList.appendChild(emptyMsg);
-      return;
+    const message = loadMessage();
+    
+    if (!message || isMessageExpired(message)) {
+      // Show default message if expired or no message
+      hiddenMessageElement.textContent = DEFAULT_MESSAGE;
+      // Clear expired message from storage
+      if (message && isMessageExpired(message)) {
+        localStorage.removeItem(MESSAGE_STORAGE_KEY);
+      }
+    } else {
+      // Show the stored message
+      hiddenMessageElement.textContent = message.text;
     }
-
-    notes
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .forEach(note => {
-        const wrapper = document.createElement("div");
-        wrapper.className = "note-item";
-
-        const text = document.createElement("div");
-        text.className = "note-text";
-        text.textContent = note.text;
-
-        const meta = document.createElement("div");
-        meta.className = "note-meta";
-
-        const time = document.createElement("span");
-        time.textContent = `Posted: ${formatTime(note.createdAt)}`;
-
-        const expiry = document.createElement("span");
-        expiry.className = "note-expiry";
-        const remainingMs = NOTE_TTL_MS - (Date.now() - note.createdAt);
-        expiry.textContent = `Expires in ${formatTimeRemaining(remainingMs)}`;
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.className = "note-delete-btn";
-        deleteBtn.textContent = "Delete";
-        deleteBtn.addEventListener("click", () => {
-          const current = loadNotes();
-          const filtered = current.filter(n => n.id !== note.id);
-          if (saveNotes(filtered)) {
-            renderNotes();
-          }
-        });
-
-        meta.appendChild(time);
-        meta.appendChild(expiry);
-        meta.appendChild(deleteBtn);
-
-        wrapper.appendChild(text);
-        wrapper.appendChild(meta);
-
-        notesList.appendChild(wrapper);
-      });
   }
 
-  function addNote() {
+  // Make updateHiddenMessage globally accessible
+  window.updateHiddenMessage = updateHiddenMessage;
+
+  function addMessage() {
     if (!noteInput) return;
     const text = noteInput.value.trim();
     if (!text) {
@@ -309,40 +247,35 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    const notes = cleanupExpired(loadNotes());
-    const newNote = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 9),
-      text: text,
-      createdAt: Date.now()
-    };
-
-    notes.push(newNote);
-    if (saveNotes(notes)) {
+    if (saveMessage(text)) {
       noteInput.value = "";
-      renderNotes();
-      // Scroll to the new note
+      updateHiddenMessage();
+      // Show success feedback
+      const btn = submitNoteBtn;
+      const originalText = btn.textContent;
+      btn.textContent = "Posted!";
+      btn.style.background = "linear-gradient(135deg, #4caf50, #45a049)";
       setTimeout(() => {
-        if (notesList.firstChild) {
-          notesList.firstChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      }, 100);
+        btn.textContent = originalText;
+        btn.style.background = "";
+      }, 2000);
     }
   }
 
   if (submitNoteBtn && noteInput) {
-    submitNoteBtn.addEventListener("click", addNote);
+    submitNoteBtn.addEventListener("click", addMessage);
     noteInput.addEventListener("keydown", function (e) {
       if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        addNote();
+        addMessage();
       }
     });
   }
 
-  // Initial render and periodic cleanup
-  renderNotes();
+  // Initial update and periodic cleanup
+  updateHiddenMessage();
   setInterval(() => {
-    renderNotes();
-  }, 60 * 1000); // refresh every minute
+    updateHiddenMessage();
+  }, 60 * 1000); // check every minute
 
 });
