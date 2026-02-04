@@ -151,4 +151,135 @@ document.addEventListener("DOMContentLoaded", function () {
   updateCountdown();
   setInterval(updateCountdown, 1000);
 
+  // ===== NOTE EDITOR WITH 24-HOUR AUTO-DELETE =====
+
+  const NOTES_STORAGE_KEY = "jzf_temp_notes_v1";
+  const NOTE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+  const noteInput = document.getElementById("noteInput");
+  const submitNoteBtn = document.getElementById("submitNote");
+  const notesList = document.getElementById("notesList");
+
+  function loadNotes() {
+    try {
+      const raw = localStorage.getItem(NOTES_STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveNotes(notes) {
+    localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+  }
+
+  function isExpired(note) {
+    return Date.now() - note.createdAt >= NOTE_TTL_MS;
+  }
+
+  function cleanupExpired(notes) {
+    const fresh = notes.filter(n => !isExpired(n));
+    if (fresh.length !== notes.length) {
+      saveNotes(fresh);
+    }
+    return fresh;
+  }
+
+  function formatTime(ts) {
+    const d = new Date(ts);
+    return d.toLocaleString();
+  }
+
+  function renderNotes() {
+    if (!notesList) return;
+    let notes = loadNotes();
+    notes = cleanupExpired(notes);
+
+    notesList.innerHTML = "";
+    if (notes.length === 0) return;
+
+    notes
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .forEach(note => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "note-item";
+
+        const text = document.createElement("div");
+        text.className = "note-text";
+        text.textContent = note.text;
+
+        const meta = document.createElement("div");
+        meta.className = "note-meta";
+
+        const time = document.createElement("span");
+        time.textContent = `Posted: ${formatTime(note.createdAt)}`;
+
+        const expiry = document.createElement("span");
+        expiry.className = "note-expiry";
+        const remainingMs = NOTE_TTL_MS - (Date.now() - note.createdAt);
+        if (remainingMs > 0) {
+          const remainingHrs = Math.floor(remainingMs / (60 * 60 * 1000));
+          const remainingMin = Math.floor(
+            (remainingMs % (60 * 60 * 1000)) / (60 * 1000)
+          );
+          expiry.textContent = `Expires in ~${remainingHrs}h ${remainingMin}m`;
+        } else {
+          expiry.textContent = "Expired";
+        }
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "note-delete-btn";
+        deleteBtn.textContent = "Delete";
+        deleteBtn.addEventListener("click", () => {
+          const current = loadNotes();
+          const filtered = current.filter(n => n.id !== note.id);
+          saveNotes(filtered);
+          renderNotes();
+        });
+
+        meta.appendChild(time);
+        meta.appendChild(expiry);
+        meta.appendChild(deleteBtn);
+
+        wrapper.appendChild(text);
+        wrapper.appendChild(meta);
+
+        notesList.appendChild(wrapper);
+      });
+  }
+
+  function addNote() {
+    if (!noteInput) return;
+    const text = noteInput.value.trim();
+    if (!text) return;
+
+    const notes = cleanupExpired(loadNotes());
+    const newNote = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      text,
+      createdAt: Date.now()
+    };
+
+    notes.push(newNote);
+    saveNotes(notes);
+    noteInput.value = "";
+    renderNotes();
+  }
+
+  if (submitNoteBtn && noteInput) {
+    submitNoteBtn.addEventListener("click", addNote);
+    noteInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        addNote();
+      }
+    });
+  }
+
+  // initial render and periodic cleanup
+  renderNotes();
+  setInterval(renderNotes, 60 * 1000); // refresh every minute
+
 });
