@@ -160,23 +160,58 @@ document.addEventListener("DOMContentLoaded", function () {
   const submitNoteBtn = document.getElementById("submitNote");
   const notesList = document.getElementById("notesList");
 
+  // Check if localStorage is available
+  function isLocalStorageAvailable() {
+    try {
+      const test = '__localStorage_test__';
+      localStorage.setItem(test, test);
+      localStorage.removeItem(test);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   function loadNotes() {
+    if (!isLocalStorageAvailable()) {
+      console.warn('localStorage is not available');
+      return [];
+    }
     try {
       const raw = localStorage.getItem(NOTES_STORAGE_KEY);
-      if (!raw) return [];
+      if (!raw || raw === 'null' || raw === 'undefined') return [];
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) return [];
-      return parsed;
+      // Ensure all notes have required fields
+      return parsed.filter(n => n && n.id && n.text && n.createdAt);
     } catch (e) {
+      console.error('Error loading notes:', e);
       return [];
     }
   }
 
   function saveNotes(notes) {
-    localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+    if (!isLocalStorageAvailable()) {
+      console.warn('localStorage is not available');
+      return false;
+    }
+    try {
+      // Ensure we're saving a valid array
+      const validNotes = Array.isArray(notes) ? notes : [];
+      localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(validNotes));
+      return true;
+    } catch (e) {
+      console.error('Error saving notes:', e);
+      // Handle quota exceeded error
+      if (e.name === 'QuotaExceededError') {
+        alert('Storage limit reached. Please delete some old messages.');
+      }
+      return false;
+    }
   }
 
   function isExpired(note) {
+    if (!note || !note.createdAt) return true;
     return Date.now() - note.createdAt >= NOTE_TTL_MS;
   }
 
@@ -190,7 +225,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function formatTime(ts) {
     const d = new Date(ts);
-    return d.toLocaleString();
+    return d.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  }
+
+  function formatTimeRemaining(remainingMs) {
+    if (remainingMs <= 0) return "Expired";
+    const hours = Math.floor(remainingMs / (60 * 60 * 1000));
+    const minutes = Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000));
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
   }
 
   function renderNotes() {
@@ -199,7 +249,14 @@ document.addEventListener("DOMContentLoaded", function () {
     notes = cleanupExpired(notes);
 
     notesList.innerHTML = "";
-    if (notes.length === 0) return;
+    
+    if (notes.length === 0) {
+      const emptyMsg = document.createElement("div");
+      emptyMsg.className = "note-empty";
+      emptyMsg.textContent = "No messages yet. Be the first to leave one!";
+      notesList.appendChild(emptyMsg);
+      return;
+    }
 
     notes
       .sort((a, b) => b.createdAt - a.createdAt)
@@ -220,15 +277,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const expiry = document.createElement("span");
         expiry.className = "note-expiry";
         const remainingMs = NOTE_TTL_MS - (Date.now() - note.createdAt);
-        if (remainingMs > 0) {
-          const remainingHrs = Math.floor(remainingMs / (60 * 60 * 1000));
-          const remainingMin = Math.floor(
-            (remainingMs % (60 * 60 * 1000)) / (60 * 1000)
-          );
-          expiry.textContent = `Expires in ~${remainingHrs}h ${remainingMin}m`;
-        } else {
-          expiry.textContent = "Expired";
-        }
+        expiry.textContent = `Expires in ${formatTimeRemaining(remainingMs)}`;
 
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "note-delete-btn";
@@ -236,8 +285,9 @@ document.addEventListener("DOMContentLoaded", function () {
         deleteBtn.addEventListener("click", () => {
           const current = loadNotes();
           const filtered = current.filter(n => n.id !== note.id);
-          saveNotes(filtered);
-          renderNotes();
+          if (saveNotes(filtered)) {
+            renderNotes();
+          }
         });
 
         meta.appendChild(time);
@@ -254,32 +304,45 @@ document.addEventListener("DOMContentLoaded", function () {
   function addNote() {
     if (!noteInput) return;
     const text = noteInput.value.trim();
-    if (!text) return;
+    if (!text) {
+      noteInput.focus();
+      return;
+    }
 
     const notes = cleanupExpired(loadNotes());
     const newNote = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
-      text,
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 9),
+      text: text,
       createdAt: Date.now()
     };
 
     notes.push(newNote);
-    saveNotes(notes);
-    noteInput.value = "";
-    renderNotes();
+    if (saveNotes(notes)) {
+      noteInput.value = "";
+      renderNotes();
+      // Scroll to the new note
+      setTimeout(() => {
+        if (notesList.firstChild) {
+          notesList.firstChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 100);
+    }
   }
 
   if (submitNoteBtn && noteInput) {
     submitNoteBtn.addEventListener("click", addNote);
-    noteInput.addEventListener("keypress", function (e) {
+    noteInput.addEventListener("keydown", function (e) {
       if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
         addNote();
       }
     });
   }
 
-  // initial render and periodic cleanup
+  // Initial render and periodic cleanup
   renderNotes();
-  setInterval(renderNotes, 60 * 1000); // refresh every minute
+  setInterval(() => {
+    renderNotes();
+  }, 60 * 1000); // refresh every minute
 
 });
