@@ -39,9 +39,34 @@ function checkPassword() {
     closePasswordPrompt();
     const hiddenElement = document.getElementById("hidden");
     if (hiddenElement) {
-      // Update message before showing (in case it changed)
+      // Always update message before showing to get the latest
       if (typeof window.updateHiddenMessage === 'function') {
         window.updateHiddenMessage();
+      } else {
+        // Fallback: try to load and display message directly
+        try {
+          const MESSAGE_STORAGE_KEY = "jzf_message_v1";
+          const MESSAGE_TTL_MS = 24 * 60 * 60 * 1000;
+          const DEFAULT_MESSAGE = "nothing to say";
+          const raw = localStorage.getItem(MESSAGE_STORAGE_KEY);
+          if (raw) {
+            const message = JSON.parse(raw);
+            if (message && message.text && message.createdAt) {
+              const isExpired = Date.now() - message.createdAt >= MESSAGE_TTL_MS;
+              if (!isExpired) {
+                hiddenElement.textContent = message.text;
+              } else {
+                hiddenElement.textContent = DEFAULT_MESSAGE;
+              }
+            } else {
+              hiddenElement.textContent = DEFAULT_MESSAGE;
+            }
+          } else {
+            hiddenElement.textContent = DEFAULT_MESSAGE;
+          }
+        } catch (e) {
+          hiddenElement.textContent = "nothing to say";
+        }
       }
       hiddenElement.classList.add("show");
     }
@@ -183,9 +208,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     try {
       const raw = localStorage.getItem(MESSAGE_STORAGE_KEY);
-      if (!raw || raw === 'null' || raw === 'undefined') return null;
+      if (!raw || raw === 'null' || raw === 'undefined' || raw === '') {
+        return null;
+      }
       const message = JSON.parse(raw);
-      if (!message || !message.text || !message.createdAt) return null;
+      if (!message || typeof message !== 'object') {
+        return null;
+      }
+      if (!message.text || typeof message.text !== 'string') {
+        return null;
+      }
+      if (!message.createdAt || typeof message.createdAt !== 'number') {
+        return null;
+      }
       return message;
     } catch (e) {
       console.error('Error loading message:', e);
@@ -195,6 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function saveMessage(text) {
     if (!isLocalStorageAvailable()) {
+      alert('localStorage is not available in this browser.');
       return false;
     }
     try {
@@ -202,8 +238,16 @@ document.addEventListener("DOMContentLoaded", function () {
         text: text,
         createdAt: Date.now()
       };
-      localStorage.setItem(MESSAGE_STORAGE_KEY, JSON.stringify(message));
-      return true;
+      const jsonStr = JSON.stringify(message);
+      localStorage.setItem(MESSAGE_STORAGE_KEY, jsonStr);
+      // Verify it was saved
+      const saved = localStorage.getItem(MESSAGE_STORAGE_KEY);
+      if (saved === jsonStr) {
+        return true;
+      } else {
+        console.error('Message save verification failed');
+        return false;
+      }
     } catch (e) {
       console.error('Error saving message:', e);
       if (e.name === 'QuotaExceededError') {
@@ -219,20 +263,23 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function updateHiddenMessage() {
-    if (!hiddenMessageElement) return;
+    // Get fresh reference to element in case DOM changed
+    const hiddenEl = document.getElementById("hidden");
+    if (!hiddenEl) {
+      return;
+    }
     
     const message = loadMessage();
     
-    if (!message || isMessageExpired(message)) {
-      // Show default message if expired or no message
-      hiddenMessageElement.textContent = DEFAULT_MESSAGE;
+    if (!message) {
+      hiddenEl.textContent = DEFAULT_MESSAGE;
+    } else if (isMessageExpired(message)) {
+      hiddenEl.textContent = DEFAULT_MESSAGE;
       // Clear expired message from storage
-      if (message && isMessageExpired(message)) {
-        localStorage.removeItem(MESSAGE_STORAGE_KEY);
-      }
+      localStorage.removeItem(MESSAGE_STORAGE_KEY);
     } else {
       // Show the stored message
-      hiddenMessageElement.textContent = message.text;
+      hiddenEl.textContent = message.text;
     }
   }
 
@@ -249,6 +296,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (saveMessage(text)) {
       noteInput.value = "";
+      // Force update the hidden message immediately - get fresh element reference
+      const hiddenEl = document.getElementById("hidden");
+      if (hiddenEl) {
+        const savedMsg = loadMessage();
+        if (savedMsg && !isMessageExpired(savedMsg)) {
+          hiddenEl.textContent = savedMsg.text;
+        } else {
+          hiddenEl.textContent = DEFAULT_MESSAGE;
+        }
+      }
+      // Also call the update function
       updateHiddenMessage();
       // Show success feedback
       const btn = submitNoteBtn;
@@ -259,6 +317,8 @@ document.addEventListener("DOMContentLoaded", function () {
         btn.textContent = originalText;
         btn.style.background = "";
       }, 2000);
+    } else {
+      alert('Failed to save message. Please check browser console for errors.');
     }
   }
 
