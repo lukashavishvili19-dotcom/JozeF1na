@@ -8,60 +8,86 @@
 </head>
 <body>
 
-  <div class="container">
-    <div class="card">
-      <div class="header">
-        <h1>April 9, 2026</h1>
-        <p class="subtitle">Time Remaining</p>
+  <div class="split-container">
+    <!-- TOP SECTION: Countdown -->
+    <div class="top-section">
+      <div class="container">
+        <div class="card">
+          <div class="header">
+            <h1>April 9, 2026</h1>
+            <p class="subtitle">Time Remaining</p>
+          </div>
+
+          <!-- COUNTDOWN START -->
+          <div class="countdown">
+            <div class="countdown-item">
+              <span id="months" class="number">0</span>
+              <small class="label">Months</small>
+            </div>
+            <div class="countdown-item">
+              <span id="days" class="number">0</span>
+              <small class="label">Days</small>
+            </div>
+            <div class="countdown-item">
+              <span id="hours" class="number">0</span>
+              <small class="label">Hours</small>
+            </div>
+            <div class="countdown-item">
+              <span id="minutes" class="number">0</span>
+              <small class="label">Minutes</small>
+            </div>
+            <div class="countdown-item">
+              <span id="seconds" class="number">0</span>
+              <small class="label">Seconds</small>
+            </div>
+          </div>
+          <!-- COUNTDOWN END -->
+
+          <div class="divider"></div>
+
+          <button onclick="showPasswordPrompt()" class="reveal-btn">
+            <span>View Message</span>
+          </button>
+
+          <!-- Password Prompt -->
+          <div id="passwordPrompt" class="password-prompt">
+            <div class="password-box">
+              <h3>Enter Password</h3>
+              <input type="password" id="passwordInput" placeholder="Password" autocomplete="off">
+              <p id="passwordError" class="error-message"></p>
+              <div class="password-buttons">
+                <button onclick="checkPassword()" class="submit-btn">Submit</button>
+                <button onclick="closePasswordPrompt()" class="cancel-btn">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <p id="hidden" class="hidden-message">
+            Every moment brings us closer. Looking forward to what's ahead.
+          </p>
+        </div>
       </div>
+    </div>
 
-      <!-- COUNTDOWN START -->
-      <div class="countdown">
-        <div class="countdown-item">
-          <span id="months" class="number">0</span>
-          <small class="label">Months</small>
-        </div>
-        <div class="countdown-item">
-          <span id="days" class="number">0</span>
-          <small class="label">Days</small>
-        </div>
-        <div class="countdown-item">
-          <span id="hours" class="number">0</span>
-          <small class="label">Hours</small>
-        </div>
-        <div class="countdown-item">
-          <span id="minutes" class="number">0</span>
-          <small class="label">Minutes</small>
-        </div>
-        <div class="countdown-item">
-          <span id="seconds" class="number">0</span>
-          <small class="label">Seconds</small>
-        </div>
-      </div>
-      <!-- COUNTDOWN END -->
+    <!-- BOTTOM SECTION: Note Editor -->
+    <div class="bottom-section">
+      <div class="note-container">
+        <div class="note-card">
+          <div class="note-header">
+            <h2>Leave a Message</h2>
+            <p class="note-subtitle">Messages auto-delete after 24 hours</p>
+          </div>
 
-      <div class="divider"></div>
+          <div class="note-editor">
+            <textarea id="noteInput" placeholder="Write your message here..." rows="4"></textarea>
+            <button id="submitNote" class="note-submit-btn">Post Message</button>
+          </div>
 
-      <button onclick="showPasswordPrompt()" class="reveal-btn">
-        <span>View Message</span>
-      </button>
-
-      <!-- Password Prompt -->
-      <div id="passwordPrompt" class="password-prompt">
-        <div class="password-box">
-          <h3>Enter Password</h3>
-          <input type="password" id="passwordInput" placeholder="Password" autocomplete="off">
-          <p id="passwordError" class="error-message"></p>
-          <div class="password-buttons">
-            <button onclick="checkPassword()" class="submit-btn">Submit</button>
-            <button onclick="closePasswordPrompt()" class="cancel-btn">Cancel</button>
+          <div class="notes-list" id="notesList">
+            <!-- Notes will be displayed here -->
           </div>
         </div>
       </div>
-
-      <p id="hidden" class="hidden-message">
-        Every moment brings us closer. Looking forward to what's ahead.
-      </p>
     </div>
   </div>
 
